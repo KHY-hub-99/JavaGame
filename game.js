@@ -1,4 +1,6 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js";
+// import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js";
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/Addons.js";
 
 // 1️⃣ Scene & Camera
 const scene = new THREE.Scene();
@@ -33,12 +35,34 @@ scene.add(dirLight);
 const ambient = new THREE.AmbientLight(0xffffff, 0.3);
 scene.add(ambient);
 
-// 4️⃣ 큐브
-const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-const cubeMaterial = new THREE.MeshToonMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-cube.position.set(0, 3, 2);
-scene.add(cube);
+// 🔥 4️⃣ GLB 오토바이 모델 로드
+let bike;
+
+const loader = new GLTFLoader();
+loader.load(
+  "./models/akira.glb", // 👉 GLB 파일 넣을 위치
+  (gltf) => {
+    bike = gltf.scene;
+
+    // 필요하면 크기와 각도 수정
+    bike.scale.set(1, 1, 1);
+    bike.rotation.y = Math.PI; // 오토바이가 정면을 향하도록 회전
+    bike.position.set(0, 0.5, 2);
+
+    bike.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    scene.add(bike);
+
+    console.log("🏍️ GLB 오토바이 로드 완료");
+  },
+  undefined,
+  (error) => console.error("GLB Load Error:", error)
+);
 
 // 6️⃣ 바닥
 const floorGeometry = new THREE.PlaneGeometry(9, 1000);
@@ -221,7 +245,7 @@ function loopBuildings(buildingGroup) {
   });
 }
 
-// 11️⃣ 큐브 점프 및 이동
+// 11️⃣ 큐브 점프 및 이동(오토바이)
 let velocityY = 0;
 let gravity = -0.01;
 let jumpPower = 0.22;
@@ -249,22 +273,22 @@ let runSpeed = 0.3;
 function animate() {
   requestAnimationFrame(animate);
 
-  cube.rotation.x -= 0;
-  cube.rotation.y -= 0;
+  // GLB가 로드된 후부터 동작
+  if (bike) {
+    camera.position.z -= 0.3;
+    bike.position.z -= runSpeed;
 
-  camera.position.z -= 0.3;
-  cube.position.z -= runSpeed;
-  floor.position.z = camera.position.z - 0.3;
+    velocityY += gravity;
+    bike.position.y += velocityY;
 
-  // 점프 물리
-  velocityY += gravity;
-  cube.position.y += velocityY;
-  const targetX = currentLane * laneOffset;
-  cube.position.x += (targetX - cube.position.x) * laneMoveSpeed;
-  if (cube.position.y <= groundY) {
-    cube.position.y = groundY;
-    velocityY = 0;
-    isJumping = false;
+    const targetX = currentLane * laneOffset;
+    bike.position.x += (targetX - bike.position.x) * laneMoveSpeed;
+
+    if (bike.position.y <= groundY) {
+      bike.position.y = groundY;
+      velocityY = 0;
+      isJumping = false;
+    }
   }
 
   // 점선/좌우선 루프
