@@ -1,7 +1,3 @@
-// import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js";
-import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/Addons.js";
-
 // 1️⃣ Scene & Camera
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
@@ -38,7 +34,7 @@ scene.add(ambient);
 // 🔥 4️⃣ GLB 오토바이 모델 로드
 let bike;
 
-const loader = new GLTFLoader();
+const loader = new THREE.GLTFLoader();
 loader.load(
   "./models/akira.glb", // 👉 GLB 파일 넣을 위치
   (gltf) => {
